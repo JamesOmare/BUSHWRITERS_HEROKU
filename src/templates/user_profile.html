@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block navbar %}
+{% if notification == true %}
+    
+    <a class="nav-item nav-link rounded" style="background-color: #2f6c6c;" href="{{ url_for('main.chat', id=current_user.id) }}">
+    <button type="button" class="btn rounded position-relative">
+        <i class="bi bi-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle">
+    </button>
+    </a> 
+   
+{% endif %}
+{% endblock navbar%}
+
+
+{% block stylesheets %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}" >
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/card-styles.css') }}" >
+{% endblock stylesheets %}
+    
+
+    
+{% block content %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/success_prompt.css') }}" >
+<div class="row py-5 px-4 user_profile">
+    <div class="col-md-12 mx-auto">
+        <!-- Profile widget -->
+        <div class="bg-white shadow rounded overflow-hidden profile_section">
+            <div class="px-4 pt-0 pb-4 cover custom-top">
+                <div class="media align-items-end profile-head">
+                    <div class="profile mr-3 mb-3">
+                        <img
+                            src="{{url_for('static', filename='images/profile_pics/{}'.format(account_holder.profile_photo) )}}"
+                            alt="..."
+                            width="130"
+                            class="rounded-circle mb-2 img-thumbnail"
+                        />
+                    </div>
+                    <div class="media-body mb-5 text-white">
+                        <h4 class="mt-0 mb-0">{{ account_holder.username | title }}</h4>
+                        {% if current_user.id == account_holder.id %}
+                            <a href="/update" class="btn btn-outline-dark btn-sm btn-block">Edit profile</a>
+                        {% endif %}
+                        
+                        
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="bg-light p-4 d-flex justify-content-end text-center">
+                <ul class="list-inline mb-0 nav-container1">
+                    <li class="list-inline-item">          
+                        <h5 class="font-weight-bold mb-0 d-block">{{ accounts | count }}</h5>
+                        <small class="text-muted">
+                            <i class="fas fa-image mr-1"></i>Account Ads</small
+                        >
+                    </li>
+                    {% if current_user.id == account_holder.id %}
+                        {% if notification == false %}
+                        <li class="list-inline-item">          
+                            <a class="nav-item nav-link rounded" style="background-color: #2f6c6c;" href="{{ url_for('main.chat', id=current_user.id) }}">
+                                <button type="button" class="btn rounded position-relative">
+                                    <i class="bi bi-bell bi-lg"></i>
+                                </button>
+                                </a> 
+                        </li>   
+                        
+                        {% else %}
+                        <li class="list-inline-item">          
+                            <a class="nav-item nav-link rounded" style="background-color: #2f6c6c;" href="{{ url_for('main.chat', id=current_user.id) }}">
+                                <button type="button" class="btn rounded position-relative">
+                                    <i class="bi bi-bell bi-lg"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle"></span>
+                                </button>
+                                </a> 
+                        </li>   
+                        {% endif %}
+                    {% endif %}
+                    
+                    
+                </ul>
+            </div>
+            <div class="px-4 py-3">
+                <h5 class="mb-0">About</h5>
+                <div class="p-4 rounded shadow-sm bg-light">
+                    <p class="font-italic mb-0">{{ account_holder.profile_description }}</p>
+                   
+                </div>
+            </div>
+            <div class="py-4 px-4">
+                <div
+                    class="d-flex align-items-center justify-content-between mb-3"
+                >
+                    <h5 class="mb-0">Recent Accounts Ads</h5>
+                    <a href="#" class="btn btn-link text-muted">Show all</a>
+                </div>
+                <div class="row">
+
+                    {% if accounts %}
+                        {% for item in accounts %}                         
+                        <div class="col-lg-6 mb-2 pr-lg-1">
+                            <div class="card" style="width: 18rem;">
+                                {% set random_no = range(1, 4)|random|string() %}        
+                                {% if item.account_type.value == 'article_account' %} 
+                                <img class="display_image img-fluid rounded shadow-sm" src="{{url_for('static', filename='images/img/article'+random_no+'.png')}}"/>
+                                {% elif item.account_type.value == 'academic_writing_account' %}
+                                <img class="display_image img-fluid rounded shadow-sm" src="{{url_for('static', filename='images/img/academic'+random_no+'.png')}}"/>
+                                {% else %}
+                                <img class="display_image img-fluid rounded shadow-sm" src="{{url_for('static', filename='images/img/blog'+random_no+'.png')}}"/>
+                                {% endif %}
+                                <div class="card-body">
+                                <h5 class="card-title">{{ item.account_type.value | replace("_", "  ") | title }}</h5>
+                                <p class="card-text">{{ item.description }}.</p>
+                                <a href="#" class="btn btn-primary disabled">Ksh {{ item.price }}</a>
+                                <a href="{{url_for('main.product_view', item_id=item.account_id)}}" class="btn btn-primary view-btn">View</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                            <p>No account add created.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+{% endblock content %}
+
+
+
+{% block sidebar %}
+  <div class="col-md-4 sidebar">
+    <div class="content-section">
+      <!-- Sell Account Details -->
+      <h3 class="side-title">Sell Account</h3>
+      <p class='text-muted side-text'>Place an ad on an account you want to sell.
+        <!--Widget Start-->
+        <div class="card-body card-sidebar color1">
+          <div class="float-left">
+            <p>Account Ad</p>
+              <h3>
+                  <span class="currency">Sell</span>
+              </h3>
+            
+          </div>
+          <div class="float-right">
+            <i class="bi bi-cash-coin"></i>
+          </div>
+        </div>
+        <!--Widget End-->
+      </p>
+      <div class="d-grid gap-2 col-11 mx-auto">
+        <a href="{{ url_for('main.seller') }}" role="button" class="btn btn-warning">Sell Account</a>
+      </div>
+      <br/>
+      <hr class="text-white">
+
+      <h3 class="side-title">Buy Account</h3>
+      <p class='text-muted side-text'>View marketplace to explore listings on accounts for sale.
+       <!--Widget Start-->
+       <div class="card-body card-sidebar color2">
+        <div class="float-left">
+          <p>Visit</p>
+            <h3>
+                <span class="currency">Listings</span>
+            </h3>
+          
+        </div>
+        <div class="float-right">
+          <i class="bi bi-cart4"></i>
+        </div>
+      </div>
+      <!--Widget End-->
+      </p>
+      <div class="d-grid gap-2 col-11 mx-auto">
+        <a href="{{ url_for('main.viewpage') }}" role="button" class="btn btn-warning">Visit Marketplace</a>
+      </div>
+      <br/>
+      <hr class="text-white">
+
+
+      <h3 class="side-title">Customer Support</h3>
+      <p class='text-muted side-text'>Our Support center is always one call away.
+       <!--Widget Start-->
+       <div class="card-body card-sidebar color4">
+        <div class="float-left">
+          <p>Client</p>
+            <h3>
+                <span class="currency">Support</span>
+            </h3>
+        </div>
+        <div class="float-right">
+          <i class="bi bi-headset"></i>
+        </div>
+      </div>
+      <!--Widget End-->
+      </p>
+     
+
+    </div>
+  </div>
+  <br/>
+  
+{% endblock sidebar %}
+
+{% block footer %}
+<div class="border-top pt-3"></div>
+<div class="container footer-container">
+  <footer class="py-5">
+    <div class="row">
+      <div class="col-6 col-md-2 mb-3">
+        <h5 class="text-white">Section</h5>
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2 footer-color"><a href="#" class="nav-link p-0 footer-color">Home</a></li>
+          <li class="nav-item mb-2 footer-color"><a href="#" class="nav-link p-0 footer-color">Features</a></li>
+          <li class="nav-item mb-2 footer-color"><a href="#" class="nav-link p-0 footer-color">Pricing</a></li>
+          <li class="nav-item mb-2 footer-color"><a href="#" class="nav-link p-0 footer-color">FAQs</a></li>
+          <li class="nav-item mb-2 footer-color"><a href="#" class="nav-link p-0 footer-color">About</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-md-2 mb-3">
+        <h5 class="text-white">Section</h5>
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">Home</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">Features</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">Pricing</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">FAQs</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">About</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-md-2 mb-3">
+        <h5 class="text-white">Section</h5>
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">Home</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">Features</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">Pricing</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">FAQs</a></li>
+          <li class="nav-item mb-2"><a href="#" class="nav-link p-0 footer-color">About</a></li>
+        </ul>
+      </div>
+
+      <div class="col-md-5 offset-md-1 mb-3">
+        <form>
+          <h5 class="text-white">Subscribe to our newsletter</h5>
+          <p class="footer-color">Monthly digest of what's new and exciting from us.</p>
+          <div class="d-flex flex-column flex-sm-row w-100 gap-2">
+            <label for="newsletter1" class="visually-hidden">Email address</label>
+            <input id="newsletter1" type="text" class="form-control" placeholder="Email address">
+            <button class="btn btn-primary" type="button">Subscribe</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="d-flex flex-column flex-sm-row justify-content-between py-4 my-4 border-top">
+      <p class="text-white">&copy; 2022 Company, Inc. All rights reserved.</p>
+      <ul class="list-unstyled d-flex">
+        <i class="bi bi-twitter p-2 text-white"></i>
+        <i class="bi bi-instagram p-2 text-white"></i>
+        <i class="bi bi-facebook p-2 text-white"></i>
+        <li class="ms-3"><a class="text-white" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#twitter"/></svg></a></li>
+        <li class="ms-3"><a class="link-dark" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#instagram"/></svg></a></li>
+        <li class="ms-3"><a class="link-dark" href="#"><svg class="bi" width="24" height="24"><use xlink:href="#facebook"/></svg></a></li>
+      </ul>
+    </div>
+  </footer>
+</div>
+{% endblock footer %}
+
+
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-A3rJD856KowSb7dwlZdYEkO39Gagi7vIsF0jrRAoQmDKKtQBHUuLZ9AsSv4jD4Xa" crossorigin="anonymous"></script>
+{% endblock scripts %}
+    
