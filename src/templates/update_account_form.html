@@ -11,8 +11,8 @@
       <div class="media">
         <img class="rounded-circle account-img" src="{{ image_file }}">
         <div class="media-body">
-          <h2 class="account-heading">{{ current_user.username }}</h2>
-          <p class="text-secondary">Primary Email: {{ current_user.email }}</p>
+          <h2 class="account-heading text-white">{{ current_user.username }}</h2>
+          <p class="text-secondary text-white">Primary Email: {{ current_user.email }}</p>
         </div>
       </div>
         <form method="POST" action="" enctype="multipart/form-data">
@@ -23,7 +23,7 @@
                 <!-- Username field -->
                     <!-- first name -->
                     <div class="form-group">
-                        {{ form.first_name.label(class="form-control-label") }}
+                        {{ form.first_name.label(class="form-control-label text-white") }}
 
                         {% if form.first_name.errors %}
                             {{ form.first_name(class="form-control form-control-lg is-invalid") }}
@@ -38,7 +38,7 @@
                     </div>
                     <!-- last name -->
                     <div class="form-group">
-                        {{ form.last_name.label(class="form-control-label") }}
+                        {{ form.last_name.label(class="form-control-label text-white") }}
 
                         {% if form.last_name.errors %}
                             {{ form.last_name(class="form-control form-control-lg is-invalid") }}
@@ -54,7 +54,7 @@
 
                 <!-- email field -->
                 <div class="form-group">
-                    {{ form.email.label(class="form-control-label") }}
+                    {{ form.email.label(class="form-control-label text-white") }}
                     {% if form.email.errors %}
                         {{ form.email(class="form-control form-control-lg is-invalid") }}
                         <div class="invalid-feedback">
@@ -69,7 +69,7 @@
 
                 <!-- phone field -->
                 <div class="form-group">
-                    {{ form.phone.label(class="form-control-label") }}
+                    {{ form.phone.label(class="form-control-label text-white") }}
                     {% if form.phone.errors %}
                         {{ form.phone(class="form-control form-control-lg is-invalid") }}
                         <div class="invalid-feedback">
@@ -84,7 +84,7 @@
 
                  <!-- Profile Description field -->
                  <div class="form-group">
-                    {{ form.profile_details.label(class="form-control-label") }}
+                    {{ form.profile_details.label(class="form-control-label text-white") }}
                     {% if form.profile_details.errors %}
                         {{ form.profile_details(class="form-control form-control-lg is-invalid") }}
                         <div class="invalid-feedback">
@@ -101,7 +101,7 @@
                 <!-- Profile picture field -->
                 <div class="form-group">
                     {{ form.profile_image.label() }}
-                    {{ form.profile_image(class="form-control-file") }}
+                    {{ form.profile_image(class="form-control-file text-white") }}
                     {% if form.profile_image.errors %}
                         {% for error in form.profile_image.errors %}
                             <span class="text-danger">{{ error }}</span></br>
@@ -120,19 +120,78 @@
 {% endblock content %}
 
 {% block sidebar %}
-  <div class="col-md-4">
+  <div class="col-md-4 sidebar">
     <div class="content-section">
-      <h3>Our Sidebar</h3>
-      <p class='text-muted'>You can put any information here you'd like.
-        <ul class="list-group">
-          <li class="list-group-item list-group-item-light">Latest Posts</li>
-          <li class="list-group-item list-group-item-light">Announcements</li>
-          <li class="list-group-item list-group-item-light">Calendars</li>
-          <li class="list-group-item list-group-item-light">etc</li>
-        </ul>
+      <!-- Sell Account Details -->
+      <h3 class="side-title">Sell Account</h3>
+      <p class='text-muted side-text'>Place an ad on an account you want to sell.
+        <!--Widget Start-->
+        <div class="card-body card-sidebar color1">
+          <div class="float-left">
+            <p>Account Ad</p>
+              <h3>
+                  <span class="currency">Sell</span>
+              </h3>
+            
+          </div>
+          <div class="float-right">
+            <i class="bi bi-cash-coin"></i>
+          </div>
+        </div>
+        <!--Widget End-->
       </p>
+      <div class="d-grid gap-2 col-11 mx-auto">
+        <a href="{{ url_for('main.seller') }}" role="button" class="btn btn-warning">Sell Account</a>
+      </div>
+      <br/>
+      <hr class="text-white">
+
+      <h3 class="side-title">Buy Account</h3>
+      <p class='text-muted side-text'>View marketplace to explore listings on accounts for sale.
+       <!--Widget Start-->
+       <div class="card-body card-sidebar color2">
+        <div class="float-left">
+          <p>Visit</p>
+            <h3>
+                <span class="currency">Listings</span>
+            </h3>
+          
+        </div>
+        <div class="float-right">
+          <i class="bi bi-cart4"></i>
+        </div>
+      </div>
+      <!--Widget End-->
+      </p>
+      <div class="d-grid gap-2 col-11 mx-auto">
+        <a href="{{ url_for('main.viewpage') }}" role="button" class="btn btn-warning">Visit Marketplace</a>
+      </div>
+      <br/>
+      <hr class="text-white">
+
+
+      <h3 class="side-title">Customer Support</h3>
+      <p class='text-muted side-text'>Our Support center is always one call away.
+       <!--Widget Start-->
+       <div class="card-body card-sidebar color4">
+        <div class="float-left">
+          <p>Client</p>
+            <h3>
+                <span class="currency">Support</span>
+            </h3>
+        </div>
+        <div class="float-right">
+          <i class="bi bi-headset"></i>
+        </div>
+      </div>
+      <!--Widget End-->
+      </p>
+     
+
     </div>
   </div>
+  <br/>
+  
 {% endblock sidebar %}
 
 
