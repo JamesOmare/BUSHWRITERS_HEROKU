@@ -544,7 +544,7 @@ def MpesaExpress(phone, amount, my_endpoint, product_id, buyer_id, seller_id):
 def mpesa_payment(payment_method, product_id, buyer_id, seller_id):
     mpesa_form = Mpesa_Confirm()
     account = Account.query.filter_by(account_id = product_id).first()
-    my_endpoint = 'https://f0e9-154-159-252-1.in.ngrok.io'
+    my_endpoint = 'https://bush-writers.herokuapp.com/'
     fee = 1
     total = fee
     print('checkpoint 1')
