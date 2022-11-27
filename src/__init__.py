@@ -5,7 +5,7 @@ from .auth.views import auth
 from .main.views import main
 from.utils import db, migrate, login_manager, admin, moment, mail
 from .models.users import User
-from .models.accounts import Account
+
 
 
 DB_NAME = 'bushwriters.db'
@@ -15,7 +15,7 @@ def create_app(config = Config):
     app.config.from_object(config)
 
     db.init_app(app)
-    migrate.init_app(app, db, render_as_batch=True)
+    migrate.init_app(app, db, compare_type=True, render_as_batch=True)
     login_manager.init_app(app)
     moment.init_app(app)
     mail.init_app(app)
