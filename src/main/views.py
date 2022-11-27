@@ -1,6 +1,7 @@
 import os
 import secrets
 import requests
+import json
 from requests.auth import HTTPBasicAuth
 import base64
 from datetime import datetime
@@ -13,14 +14,16 @@ from ..models.complaints import Complaints
 from ..models.images import Image
 from ..models.confirmation import Confirmation
 from ..models.account_credentials import Account_Credentials
+from ..models.payment import Payment
 from ..auth.form_fields import (Seller_Profile_Form, Account_Images, Update_User_Account, Payment_Method, 
-                                Complaint, Confirmation_Form, Seller_Account_Details, Search, FilteredSearch)
+                                Complaint, Confirmation_Form, Seller_Account_Details, Search, FilteredSearch, Mpesa_Confirm)
 from ..utils import db
 from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import and_, desc,asc
 from datetime import date
 from werkzeug.utils import secure_filename
 from decouple import config
+import phonenumbers
 
 main = Blueprint('main', __name__)
 
@@ -99,11 +102,13 @@ def viewpage():
         if payment_method == 'Mpesa':
             buyer_id = current_user.id
             seller_id = account_seller.user_id
-            return redirect(url_for('main.mpesa_payment', product_id = account_id, buyer_id = buyer_id, seller_id = seller_id))
+            print('here')
+            return redirect(url_for('main.mpesa_payment', payment_method = payment_method, product_id = account_id, buyer_id = buyer_id, seller_id = seller_id))
         elif payment_method == 'Paypal':
             buyer_id = current_user.id
             seller_id = account_seller.user_id
-            return redirect(url_for('main.paypal_payment', product_id = account_id, buyer_id = buyer_id, seller_id = seller_id))
+            print('here too')
+            return redirect(url_for('main.paypal_payment', payment_method = payment_method, product_id = account_id, buyer_id = buyer_id, seller_id = seller_id))
         else:
             return render_template('404.html'), 404
     return render_template('view.html', account=account, logged_in_user=current_user, purchase_form = purchase_form, form = search_form)
@@ -121,7 +126,7 @@ def product_view(item_id):
         if payment_method == 'Mpesa':
             buyer_id = current_user.id
             seller_id = account_seller.user_id
-            return redirect(url_for('main.mpesa_payment', product_id = account_id, buyer_id = buyer_id, seller_id = seller_id))
+            return redirect(url_for('main.mpesa_payment', payment_method = payment_method, product_id = account_id, buyer_id = buyer_id, seller_id = seller_id))
         elif payment_method == 'Paypal':
             buyer_id = current_user.id
             seller_id = account_seller.user_id
@@ -428,20 +433,64 @@ def is_approved_payment(captured_payment):
     else:
         return False
 
-@main.route("/payment")
-@login_required
-def paypal_payment():
-    return render_template("paypal_payment.html", paypal_business_client_id=config('PAYPAL_BUSINESS_CLIENT_ID'),
-                           price=config('IB_TAX_APP_PRICE'), currency=config('IB_TAX_APP_PRICE_CURRENCY'))
+# @main.route("/payment/<payment_method>/<product_id>/<buyer_id>/<seller_id>")
+# @login_required
+# def paypal_payment(payment_method, product_id, buyer_id, seller_id):
+#     if payment_method == "Paypal":
+#         return render_template("paypal_payment.html", paypal_business_client_id=config('PAYPAL_BUSINESS_CLIENT_ID'),
+#                            price=config('IB_TAX_APP_PRICE'), currency=config('IB_TAX_APP_PRICE_CURRENCY'), product_id = product_id, buyer_id=buyer_id, seller_id = seller_id)
+    
+#     else:
+#         return redirect(url_for('main.mpesa_payment',payment_method = 'Mpesa', product_id = product_id, buyer_id = buyer_id, seller_id = seller_id))
 
-@main.route("/payment/<order_id>/capture", methods=["POST"])
+@main.route("/payment/<order_id>/capture/<product_id>/<buyer_id>/<seller_id>", methods=["POST"])
 @login_required
-def capture_payment(order_id):  # Checks and confirms payment
+def capture_payment(order_id, product_id, buyer_id, seller_id):  # Checks and confirms payment
     captured_payment = paypal_capture_function(order_id)
-    # print(captured_payment)
     if is_approved_payment(captured_payment):
-        # Do something (for example Update user field)
-        pass
+        # Capture Payment Callback
+        buyer_id = buyer_id
+        seller_id = seller_id
+        product_id = product_id
+        transaction_id = captured_payment['id']
+        transaction_status = captured_payment['status']
+        paypal_email = captured_payment['payment_source']['paypal']['email_address']
+        country_code = captured_payment['payment_source']['paypal']['address']['country_code']
+        payment_currency = captured_payment['purchase_units'][0]['payments']['captures'][0]['amount']['currency_code']
+        gross_payment = captured_payment['purchase_units'][0]['payments']['captures'][0]['amount']['value']
+        paypal_fee = captured_payment['purchase_units'][0]['payments']['captures'][0]['seller_receivable_breakdown']['paypal_fee']['value']
+        net_payment = captured_payment['purchase_units'][0]['payments']['captures'][0]['seller_receivable_breakdown']['net_amount']['value']
+        datetime_str = captured_payment['purchase_units'][0]['payments']['captures'][0]['update_time']
+        # A list containing multiple characters, that needs to be deleted from the string.
+        list_of_chars = ['T', 'Z']
+        # Filter multiple characters from string
+        filtered_chars = filter(lambda item: item not in list_of_chars, datetime_str)
+        # Join remaining characters in the filtered list
+        sample_str = ''.join(filtered_chars)
+        transaction_date = sample_str[0:10]
+        transaction_time = sample_str[10:18]
+
+        # print(buyer_id, seller_id, product_id, transaction_id, transaction_status, paypal_email, paypal_fee, county_code, payment_currency, 
+        #     gross_payment, net_payment, transaction_date, transaction_time)
+
+        payment_data = Payment(
+            buyer_id = buyer_id,
+            seller_id = seller_id,
+            product_id = product_id,
+            status = transaction_status,
+            payment_method = 'paypal',
+            transaction_id = transaction_id,
+            country_code = country_code,
+            gross_pay = gross_payment,
+            paypal_fee = paypal_fee,
+            paypal_email = paypal_email,
+            net_pay = net_payment,
+            currency_paid = payment_currency,
+            transaction_date = transaction_date,
+            transaction_time = transaction_time
+        )
+        db.session.add(payment_data)
+        db.session.commit()
     return jsonify(captured_payment)
 
 
@@ -459,29 +508,8 @@ def getAccesstoken():
     access_token = r.json()['access_token']
     return access_token
 
-
-@main.route('/payment/<product_id>/<payment_method>', methods = ['GET', 'POST'])
-@login_required
-def mpesa_payment(product_id, payment_method):
-    account = Account.query.filter_by(account_id = product_id).first()
-
-    if payment_method == 'Mpesa':
-        return render_template()
-    
-    return render_template('payment.html', account = account)
-
-
-my_endpoint = 'https://cdbf-102-2-160-42.in.ngrok.io'
-
-
 # Initialize M-PESA Express request
-# /pay?phone=&amount=1
-@main.route('/pay')
-@login_required
-def MpesaExpress():
-    amount = request.args.get('amount')
-    phone = request.args.get('phone')
-
+def MpesaExpress(phone, amount, my_endpoint, product_id, buyer_id, seller_id):
     endpoint = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
     access_token = getAccesstoken()
     headers = {
@@ -496,11 +524,11 @@ def MpesaExpress():
         "BusinessShortCode" : "174379",
         "Password": password,
         "Timestamp": times,
-        "TransactionType": "CustomerBuyGoodsOnline",
+        "TransactionType": "CustomerPayBillOnline",
         "PartyA": phone,
         "PartyB": "174379",
         "PhoneNumber": phone,
-        "CallBackURL": my_endpoint + "/lnmo-callback",
+        "CallBackURL": my_endpoint + f"/stk_callback/{product_id}/{buyer_id}/{seller_id}",
         "AccountReference": "TestPay",
         "TransactionDesc": "HelloTest",
         "Amount": amount
@@ -511,13 +539,81 @@ def MpesaExpress():
     return res.json()
 
 
-#consume M-PESA Express callback
-@main.route('/lnmo-callback', methods=['POST'])
+@main.route('/payment/<payment_method>/<product_id>/<buyer_id>/<seller_id>', methods = ['GET', 'POST'])
 @login_required
-def incoming():
-    data = request.get_json()
-    print(data)
-    return "OK"
+def mpesa_payment(payment_method, product_id, buyer_id, seller_id):
+    mpesa_form = Mpesa_Confirm()
+    account = Account.query.filter_by(account_id = product_id).first()
+    my_endpoint = 'https://f0e9-154-159-252-1.in.ngrok.io'
+    fee = 1
+    total = fee
+    print('checkpoint 1')
+    if request.method == 'POST':
+        print('checkpoint 2')
+        if mpesa_form.validate_on_submit:
+            print('checkpoint 3')
+            unfilterd_number = mpesa_form.phone_number.data
+            number = phonenumbers.parse(unfilterd_number, "KE")
+            phone_number = phonenumbers.format_number(number, phonenumbers.PhoneNumberFormat.E164)
+            phone = phone_number.lstrip("+")
+            amount = total
+            print('number is', phone)
+            MpesaExpress(phone,amount, my_endpoint, product_id, buyer_id, seller_id)
+        elif mpesa_form.error:
+            print('Error is: ', mpesa_form.errors, "  ", mpesa_form.form_errors)
+    return render_template('payment.html', mpesa_form = mpesa_form, account = account, buyer_id = buyer_id, seller_id = seller_id, )
+
+
+
+#consume M-PESA Express callback
+@main.route('/stk_callback/<product_id>/<buyer_id>/<seller_id>', methods=['POST'])
+@login_required
+def incoming(product_id, buyer_id, seller_id):
+    print('unexpected------------------')
+    unfiltered_data = request.get_json()
+    if unfiltered_data:
+        filtered_data = unfiltered_data.replace("'", '"')
+        data = json.loads(filtered_data)
+
+        if data['Body']['stkCallback']['ResultCode'] == 0:
+            buyer_id = buyer_id
+            seller_id = seller_id
+            product_id = product_id
+            transaction_status = 'SUCCESS'
+            transaction_id = data['Body']['stkCallback']['CallbackMetadata']['Item'][1]['Value']
+            gross_pay = data['Body']['stkCallback']['CallbackMetadata']['Item'][0]['Value']
+            payment_number = data['Body']['stkCallback']['CallbackMetadata']['Item'][4]['Value']
+            date_int = data['Body']['stkCallback']['CallbackMetadata']['Item'][3]['Value']
+            date_str =  str(date_int)
+            date_object = datetime.strptime(date_str, '%Y%m%d%H%M%S').date()
+            time_object = datetime.strptime(date_str, '%Y%m%d%H%M%S').time()
+            transaction_date = date_object
+            transaction_time = time_object
+            
+        
+            payment_data = Payment(
+                    buyer_id = buyer_id,
+                    seller_id = seller_id,
+                    product_id = product_id,
+                    status = transaction_status,
+                    payment_method = 'mpesa',
+                    transaction_id = transaction_id,
+                    country_code = 'KE',
+                    gross_pay = gross_pay,
+                    mpesa_fee = 0,
+                    net_pay = 0,
+                    payment_number = payment_number,
+                    currency_paid = 'KSH',
+                    transaction_date = transaction_date,
+                    transaction_time = transaction_time
+                )
+            db.session.add(payment_data)
+            db.session.commit()
+            return "SUCCESS"
+        elif data['Body']['stkCallback']['ResultCode'] == 1032:
+            return "<h1>Process Cancelled By User</h1>"
+        else:
+            print(data)
 
 
 @main.route('/on_progress/<product_id>', methods = ['POST', 'GET'])
