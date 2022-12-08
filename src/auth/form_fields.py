@@ -214,4 +214,4 @@ class FilteredSearch(FlaskForm):
 class Mpesa_Confirm(FlaskForm):
     phone_number = StringField(validators=[InputRequired(message='Phone Number required'),
                 Length(min=10, max=15, message='Phone number must be at least 10 characters')])
-    confirm = SubmitField()
+    pay = SubmitField('Make Payment')
